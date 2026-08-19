@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kapuluan Atlas — Philippine Demographic Data Lab</title>
+<meta name="description" content="An independent academic data-exploration project charting Philippine population and demographic indicators from 1950 to 2026, sourced from MacroTrends.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#14241f;
+    --ink-soft:#3e534c;
+    --marine-900:#0a3430;
+    --marine-800:#0f423c;
+    --marine-700:#175750;
+    --reef-500:#1f7a6c;
+    --reef-300:#4fa393;
+    --sand-050:#f2ede0;
+    --sand-100:#e9e0cc;
+    --sand-150:#e0d5bc;
+    --coral-500:#e8734a;
+    --coral-600:#d15f38;
+    --coral-100:#f7dbc7;
+    --line:rgba(20,36,31,0.14);
+    --line-dark:rgba(242,237,224,0.16);
+    --shadow:0 20px 50px -25px rgba(10,52,48,0.35);
+    --radius:2px;
+    --font-display:'Fraunces', ui-serif, Georgia, serif;
+    --font-body:'IBM Plex Sans', -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  body{
+    margin:0;
+    background:var(--sand-050);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:var(--reef-500);}
+  a:focus-visible, button:focus-visible, input:focus-visible, th[tabindex]:focus-visible{
+    outline:2.5px solid var(--coral-500);
+    outline-offset:3px;
+  }
+
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+  @media (max-width:640px){ .wrap{padding:0 20px;} }
+
+  .eyebrow{
+    font-family:var(--font-mono);
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    font-size:12px;
+    font-weight:500;
+  }
+
+  /* ---------- Header ---------- */
+  header.site{
+    position:sticky; top:0; z-index:40;
+    background:rgba(242,237,224,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 0;
+    gap:24px;
+  }
+  .wordmark{
+    display:flex; align-items:baseline; gap:10px;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:19px;
+    color:var(--marine-900);
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .wordmark .mark{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--coral-500);
+    display:inline-block;
+    transform:translateY(-1px);
+  }
+  .wordmark small{
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  nav.primary{display:flex; gap:28px; flex-wrap:wrap;}
+  nav.primary a{
+    font-size:13.5px;
+    font-weight:500;
+    color:var(--ink);
+    text-decoration:none;
+    font-family:var(--font-mono);
+    letter-spacing:0.02em;
+    position:relative;
+    padding-bottom:2px;
+  }
+  nav.primary a:hover{color:var(--coral-600);}
+  @media (max-width:760px){ nav.primary{display:none;} }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    background:
+      radial-gradient(ellipse 900px 500px at 85% -10%, rgba(232,115,74,0.16), transparent 60%),
+      linear-gradient(180deg, var(--marine-900), var(--marine-800));
+    color:var(--sand-050);
+    padding:76px 0 0;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero-grid{
+    display:grid; grid-template-columns:1.15fr 0.85fr; gap:56px; align-items:end;
+  }
+  @media (max-width:900px){ .hero-grid{grid-template-columns:1fr;} }
+
+  .hero .eyebrow{color:var(--coral-100);}
+  .hero h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-style:italic;
+    font-size:clamp(38px, 5.4vw, 64px);
+    line-height:1.04;
+    margin:18px 0 22px;
+    letter-spacing:-0.01em;
+    max-width:16ch;
+  }
+  .hero h1 em{
+    font-style:normal;
+    font-weight:900;
+    color:var(--coral-500);
+  }
+  .hero p.lede{
+    font-size:17px;
+    max-width:46ch;
+    color:rgba(242,237,224,0.82);
+    margin:0 0 34px;
+  }
+  .hero-stats{
+    display:flex; gap:34px; flex-wrap:wrap;
+    padding-bottom:40px;
+    border-bottom:1px solid var(--line-dark);
+  }
+  .hstat b{
+    display:block;
+    font-family:var(--font-display);
+    font-size:29px;
+    font-weight:600;
+  }
+  .hstat span{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:rgba(242,237,224,0.6);
+  }
+
+  .hero-chart-card{
+    background:rgba(242,237,224,0.05);
+    border:1px solid var(--line-dark);
+    border-radius:var(--radius);
+    padding:22px 22px 8px;
+  }
+  .hero-chart-card .cap{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-family:var(--font-mono); font-size:11.5px; letter-spacing:0.06em;
+    text-transform:uppercase; color:rgba(242,237,224,0.65);
+    margin-bottom:12px;
+  }
+  .hero-chart-card .cap strong{color:var(--sand-050); font-size:13px; letter-spacing:0.02em;}
+  .hero-chart-wrap{height:190px;}
+
+  .tide-band{
+    height:34px;
+    margin-top:36px;
+    background-image: repeating-linear-gradient(90deg, var(--line-dark) 0, var(--line-dark) 1px, transparent 1px, transparent 64px);
+  }
+
+  /* ---------- Section shell ---------- */
+  section{padding:88px 0;}
+  section.alt{background:var(--sand-100);}
+  .section-head{
+    display:flex; justify-content:space-between; align-items:flex-end; gap:24px;
+    margin-bottom:44px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line);
+    padding-bottom:22px;
+  }
+  .section-head .eyebrow{color:var(--coral-600);}
+  .section-head h2{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:clamp(26px,3.2vw,36px);
+    margin:8px 0 0;
+    color:var(--marine-900);
+  }
+  .section-head p{max-width:44ch; margin:0; color:var(--ink-soft); font-size:14.5px;}
+
+  /* ---------- About ---------- */
+  .about-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:56px;}
+  @media (max-width:820px){ .about-grid{grid-template-columns:1fr;} }
+  .about-grid p{font-size:16.5px; color:var(--ink-soft); max-width:58ch;}
+  .about-grid strong{color:var(--ink);}
+  .notice{
+    border-left:3px solid var(--coral-500);
+    background:var(--sand-150);
+    padding:14px 18px;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-top:22px;
+  }
+  .fact-card{
+    background:var(--marine-900); color:var(--sand-050);
+    padding:28px; border-radius:var(--radius);
+  }
+  .fact-card dl{display:grid; grid-template-columns:1fr auto; gap:14px 12px; margin:0;}
+  .fact-card dt{font-family:var(--font-mono); font-size:12px; letter-spacing:0.04em; color:rgba(242,237,224,0.62);}
+  .fact-card dd{margin:0; font-family:var(--font-display); font-weight:600; text-align:right;}
+
+  /* ---------- Glossary ---------- */
+  .glossary-group{margin-bottom:40px;}
+  .glossary-group:last-child{margin-bottom:0;}
+  .glossary-group h3{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--reef-500); margin:0 0 16px; display:flex; align-items:center; gap:10px;
+  }
+  .glossary-group h3::after{content:""; flex:1; height:1px; background:var(--line);}
+  .term-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:1px; background:var(--line); border:1px solid var(--line);}
+  @media (max-width:700px){ .term-grid{grid-template-columns:1fr;} }
+  .term{background:var(--sand-050); padding:22px 24px;}
+  section.alt .term{background:var(--sand-100);}
+  .term .name{
+    font-family:var(--font-display); font-weight:600; font-size:16.5px; color:var(--marine-900);
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+  }
+  .term .unit{font-family:var(--font-mono); font-size:10.5px; color:var(--coral-600); text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap;}
+  .term p{margin:8px 0 0; font-size:14px; color:var(--ink-soft);}
+
+  /* ---------- Explorer ---------- */
+  .explorer-shell{
+    background:var(--marine-900); border-radius:var(--radius); overflow:hidden; color:var(--sand-050);
+  }
+  .metric-tabs{
+    display:flex; flex-wrap:wrap; gap:0; border-bottom:1px solid var(--line-dark);
+  }
+  .metric-tabs button{
+    font-family:var(--font-mono); font-size:11.5px; letter-spacing:0.02em;
+    background:transparent; border:none; color:rgba(242,237,224,0.55);
+    padding:16px 16px; cursor:pointer; border-bottom:2px solid transparent;
+    white-space:nowrap;
+  }
+  .metric-tabs button:hover{color:var(--sand-050);}
+  .metric-tabs button.active{color:var(--coral-500); border-bottom-color:var(--coral-500);}
+  .explorer-body{padding:30px 30px 8px;}
+  .explorer-meta{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:18px;}
+  .explorer-meta h3{font-family:var(--font-display); font-weight:600; font-size:22px; margin:0;}
+  .explorer-meta p{margin:6px 0 0; font-size:13.5px; color:rgba(242,237,224,0.65); max-width:52ch;}
+  .explorer-readout{text-align:right; font-family:var(--font-mono);}
+  .explorer-readout b{display:block; font-family:var(--font-display); font-size:26px; font-weight:600;}
+  .explorer-readout span{font-size:11px; color:rgba(242,237,224,0.55); text-transform:uppercase; letter-spacing:0.06em;}
+  .explorer-chart{height:320px; padding-bottom:14px;}
+  @media (max-width:640px){ .explorer-chart{height:260px;} }
+
+  /* ---------- Table ---------- */
+  .table-toolbar{
+    display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .table-toolbar label{font-family:var(--font-mono); font-size:11.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft);}
+  .table-toolbar input{
+    font-family:var(--font-mono); font-size:13px;
+    padding:9px 12px; border:1px solid var(--line); background:var(--sand-050);
+    border-radius:var(--radius); width:140px;
+  }
+  .table-scroll{
+    max-height:560px; overflow:auto; border:1px solid var(--line); border-radius:var(--radius);
+    background:var(--sand-050);
+  }
+  table.data{
+    border-collapse:collapse; width:100%; font-family:var(--font-mono); font-size:12.5px; white-space:nowrap;
+  }
+  table.data caption{text-align:left; padding:10px 14px; font-size:12px; color:var(--ink-soft); font-family:var(--font-body); line-height:1.5;}
+  table.data thead th{
+    position:sticky; top:0; background:var(--marine-900); color:var(--sand-050);
+    text-align:right; padding:12px 14px; font-weight:500; cursor:pointer; user-select:none;
+    border-bottom:1px solid var(--line-dark);
+  }
+  table.data thead th:first-child{text-align:left;}
+  table.data thead th .arrow{opacity:0.6; font-size:10px; margin-left:4px;}
+  table.data thead th.sorted{color:var(--coral-100);}
+  table.data tbody td{padding:9px 14px; text-align:right; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums;}
+  table.data tbody td:first-child{text-align:left; font-family:var(--font-display); font-weight:600; color:var(--marine-900);}
+  table.data tbody tr:hover{background:var(--sand-100);}
+  table.data tbody tr.hidden-row{display:none;}
+  table.data tbody td.na{color:var(--ink-soft); opacity:0.5;}
+
+  /* ---------- Source / Footer ---------- */
+  .source-panel{
+    display:grid; grid-template-columns:1fr 1fr; gap:56px;
+  }
+  @media (max-width:820px){ .source-panel{grid-template-columns:1fr;} }
+  .source-card{
+    border:1px solid var(--line); padding:30px; border-radius:var(--radius); background:var(--sand-050);
+  }
+  section.alt .source-card{background:var(--sand-100)}
+  .source-card h3{font-family:var(--font-display); font-size:19px; margin:0 0 10px; color:var(--marine-900);}
+  .source-card p{font-size:14.5px; color:var(--ink-soft); margin:0 0 16px;}
+  .mt-link{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:var(--font-mono); font-size:13px; font-weight:600;
+    color:var(--sand-050); background:var(--marine-900);
+    padding:12px 18px; border-radius:var(--radius); text-decoration:none;
+    transition:background 0.15s ease;
+  }
+  .mt-link:hover{background:var(--coral-600);}
+  .mt-link .go{transition:transform 0.15s ease;}
+  .mt-link:hover .go{transform:translateX(3px);}
+
+  footer.site{
+    background:var(--marine-900); color:rgba(242,237,224,0.55);
+    padding:36px 0; font-size:12.5px;
+  }
+  footer.site .wrap{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center;}
+  footer.site a{color:rgba(242,237,224,0.8);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav-row">
+    <a class="wordmark" href="#top"><span class="mark"></span>Kapuluan Atlas<small>Demographic Data Lab</small></a>
+    <nav class="primary">
+      <a href="#about">Overview</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#explorer">Explorer</a>
+      <a href="#source">Source</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <p class="eyebrow">Philippine Demographic Data Lab · Academic Exploration Project</p>
+          <h1>Seventy-six years of a nation's <em>pulse</em>, mapped.</h1>
+          <p class="lede">An independent, student-led exploration of Philippine population and vital-rate statistics from 1950 to 2026 — the final years include United Nations population projections. Built for coursework and open study, not for official reference.</p>
+          <div class="hero-stats">
+            <div class="hstat"><b>77</b><span>Years covered</span></div>
+            <div class="hstat"><b>10</b><span>Indicators tracked</span></div>
+            <div class="hstat"><b>18.5M → 122.6M</b><span>Population, 1950–2026</span></div>
+          </div>
+        </div>
+        <div class="hero-chart-card">
+          <div class="cap"><span>Total population</span><strong>1950–2026</strong></div>
+          <div class="hero-chart-wrap"><canvas id="heroChart"></canvas></div>
+        </div>
+      </div>
+      <div class="tide-band" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Overview</p>
+          <h2>About this dataset</h2>
+        </div>
+        <p>What it is, where it's from, and how it's meant to be used.</p>
+      </div>
+      <div class="about-grid">
+        <div>
+          <p><strong>Kapuluan Atlas</strong> is a coursework data-exploration site built to visualize how the Philippines' population and vital statistics have moved since 1950 — from a young nation of 18.5 million to a projected 122.6 million by 2026, alongside the slower-moving currents underneath: falling fertility, rising life expectancy, and a steady drift from rural to urban living.</p>
+          <p>Every figure on this page traces back to a single source, cited in full at the bottom of the page. This project is <strong>independent and academic</strong> — it is not produced by, affiliated with, or endorsed by any Philippine government agency or statistical authority.</p>
+          <div class="notice">Figures for 2024–2026 include United Nations population projections rather than final census counts. Growth rate, density, and the urban/rural split are not yet available for some of these years and are marked <strong>N/A</strong> in the table below.</div>
+        </div>
+        <div class="fact-card">
+          <dl id="factList"><dt>Years on record</dt><dd>77</dd><dt>First year</dt><dd>1950</dd><dt>Latest year</dt><dd>2026 (proj.)</dd><dt>Indicators tracked</dt><dd>10</dd><dt>Latest population</dt><dd>122,610,193</dd><dt>Latest life expectancy</dt><dd>72.04 yrs</dd></dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="glossary" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Glossary</p>
+          <h2>Reading the columns</h2>
+        </div>
+        <p>Each field in the dataset, grouped by what it measures, with its unit of record.</p>
+      </div>
+
+      <div class="glossary-group">
+        <h3>Population &amp; settlement</h3>
+        <div class="term-grid">
+          <div class="term"><div class="name">Population <span class="unit">people</span></div><p>Total number of Filipinos recorded for the year, at national level.</p></div>
+          <div class="term"><div class="name">Density <span class="unit">people / km²</span></div><p>Population divided by total land area — a measure of how crowded the country is on average.</p></div>
+          <div class="term"><div class="name">Urban Population <span class="unit">people</span></div><p>Number of Filipinos living in areas classified as urban.</p></div>
+          <div class="term"><div class="name">Rural Population <span class="unit">people</span></div><p>Number of Filipinos living in areas classified as rural.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-group">
+        <h3>Growth &amp; mortality</h3>
+        <div class="term-grid">
+          <div class="term"><div class="name">Population Growth Rate <span class="unit">% / year</span></div><p>Year-over-year percentage change in total population.</p></div>
+          <div class="term"><div class="name">Live Births Per 1000 People <span class="unit">per 1,000 people</span></div><p>Number of live births occurring per 1,000 people during the year.</p></div>
+          <div class="term"><div class="name">Deaths Per 1000 People <span class="unit">per 1,000 people</span></div><p>Number of deaths occurring per 1,000 people during the year, across all ages.</p></div>
+          <div class="term"><div class="name">Infant Mortality Rate <span class="unit">per 1,000 live births</span></div><p>Deaths of children under age one, per 1,000 live births in the same year.</p></div>
+        </div>
+      </div>
+
+      <div class="glossary-group">
+        <h3>Life &amp; fertility</h3>
+        <div class="term-grid">
+          <div class="term"><div class="name">Years of Life Expectancy <span class="unit">years, at birth</span></div><p>Average number of years a newborn is expected to live if current mortality patterns hold.</p></div>
+          <div class="term"><div class="name">Births per Woman <span class="unit">children / woman</span></div><p>Average number of children a woman would have over her lifetime at current age-specific birth rates.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="explorer">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Explorer</p>
+          <h2>Chart any indicator</h2>
+        </div>
+        <p>Select a metric to trace its path from 1950 to 2026, then scan the full table below.</p>
+      </div>
+
+      <div class="explorer-shell">
+        <div class="metric-tabs" id="metricTabs" role="tablist"></div>
+        <div class="explorer-body">
+          <div class="explorer-meta">
+            <div>
+              <h3 id="metricTitle">Population</h3>
+              <p id="metricDesc">Total number of Filipinos recorded for the year, at national level.</p>
+            </div>
+            <div class="explorer-readout">
+              <b id="metricLatest">—</b>
+              <span id="metricLatestLabel">2026</span>
+            </div>
+          </div>
+          <div class="explorer-chart"><canvas id="metricChart"></canvas></div>
+        </div>
+      </div>
+
+      <div style="height:48px"></div>
+
+      <div class="table-toolbar">
+        <label for="yearSearch">Jump to year</label>
+        <input id="yearSearch" type="text" inputmode="numeric" placeholder="e.g. 1986">
+      </div>
+      <div class="table-scroll">
+        <table class="data" id="dataTable">
+          <caption>Full annual record, 1950–2026, as published in the source file — every row below is present in the page markup. Click a column heading to sort.</caption>
+          <thead id="tableHead"><tr><th data-key="year">Year <span class="arrow"></span></th><th data-key="growthRate">Population Growth Rate <span class="arrow"></span></th><th data-key="density">Density <span class="arrow"></span></th><th data-key="urban">Urban Population <span class="arrow"></span></th><th data-key="rural">Rural Population <span class="arrow"></span></th><th data-key="lifeExpectancy">Years of Life Expectancy <span class="arrow"></span></th><th data-key="birthRate">Live Births Per 1000 People <span class="arrow"></span></th><th data-key="deathRate">Deaths Per 1000 People <span class="arrow"></span></th><th data-key="infantMortality">Infant Mortality Rate <span class="arrow"></span></th><th data-key="fertilityRate">Births per Woman <span class="arrow"></span></th><th data-key="population">Population <span class="arrow"></span></th></tr></thead>
+          <tbody id="tableBody">
+          <tr data-year="1950"><td data-sort="1950">1950</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="54.49">54.49</td><td data-sort="50.39">50.39</td><td data-sort="14.18">14.18</td><td data-sort="93.11">93.11</td><td data-sort="7.51">7.51</td><td data-sort="18469878.0">18,469,878</td></tr>
+          <tr data-year="1951"><td data-sort="1951">1951</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="55.15">55.15</td><td data-sort="49.8">49.80</td><td data-sort="13.74">13.74</td><td data-sort="90.45">90.45</td><td data-sort="7.48">7.48</td><td data-sort="19301117.0">19,301,117</td></tr>
+          <tr data-year="1952"><td data-sort="1952">1952</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="55.82">55.82</td><td data-sort="49.21">49.21</td><td data-sort="13.29">13.29</td><td data-sort="87.79">87.79</td><td data-sort="7.45">7.45</td><td data-sort="20167861.0">20,167,861</td></tr>
+          <tr data-year="1953"><td data-sort="1953">1953</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="56.49">56.49</td><td data-sort="48.62">48.62</td><td data-sort="12.84">12.84</td><td data-sort="85.13">85.13</td><td data-sort="7.42">7.42</td><td data-sort="21073747.0">21,073,747</td></tr>
+          <tr data-year="1954"><td data-sort="1954">1954</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="57.16">57.16</td><td data-sort="48.03">48.03</td><td data-sort="12.39">12.39</td><td data-sort="82.47">82.47</td><td data-sort="7.39">7.39</td><td data-sort="22025355.0">22,025,355</td></tr>
+          <tr data-year="1955"><td data-sort="1955">1955</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="57.83">57.83</td><td data-sort="47.43">47.43</td><td data-sort="11.94">11.94</td><td data-sort="79.8">79.80</td><td data-sort="7.36">7.36</td><td data-sort="23027910.0">23,027,910</td></tr>
+          <tr data-year="1956"><td data-sort="1956">1956</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="58.49">58.49</td><td data-sort="46.84">46.84</td><td data-sort="11.49">11.49</td><td data-sort="77.14">77.14</td><td data-sort="7.33">7.33</td><td data-sort="24079343.0">24,079,343</td></tr>
+          <tr data-year="1957"><td data-sort="1957">1957</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="59.16">59.16</td><td data-sort="46.25">46.25</td><td data-sort="11.04">11.04</td><td data-sort="74.48">74.48</td><td data-sort="7.3">7.30</td><td data-sort="25175946.0">25,175,946</td></tr>
+          <tr data-year="1958"><td data-sort="1958">1958</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="59.83">59.83</td><td data-sort="45.66">45.66</td><td data-sort="10.59">10.59</td><td data-sort="71.82">71.82</td><td data-sort="7.27">7.27</td><td data-sort="26302696.0">26,302,696</td></tr>
+          <tr data-year="1959"><td data-sort="1959">1959</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="60.26">60.26</td><td data-sort="45.13">45.13</td><td data-sort="10.28">10.28</td><td data-sort="69.94">69.94</td><td data-sort="7.21">7.21</td><td data-sort="27460371.0">27,460,371</td></tr>
+          <tr data-year="1960"><td data-sort="1960">1960</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="8370647.0">8,370,647</td><td data-sort="19521250.0">19,521,250</td><td data-sort="60.7">60.70</td><td data-sort="44.6">44.60</td><td data-sort="9.96">9.96</td><td data-sort="68.05">68.05</td><td data-sort="7.15">7.15</td><td data-sort="28486871.0">28,486,871</td></tr>
+          <tr data-year="1961"><td data-sort="1961">1961</td><td data-sort="3.18">3.18%</td><td data-sort="96.54">96.54</td><td data-sort="8710689.0">8,710,689</td><td data-sort="20081932.0">20,081,932</td><td data-sort="61.13">61.13</td><td data-sort="44.07">44.07</td><td data-sort="9.65">9.65</td><td data-sort="66.16">66.16</td><td data-sort="7.1">7.10</td><td data-sort="29342411.0">29,342,411</td></tr>
+          <tr data-year="1962"><td data-sort="1962">1962</td><td data-sort="3.18">3.18%</td><td data-sort="99.66">99.66</td><td data-sort="9055161.0">9,055,161</td><td data-sort="20668375.0">20,668,375</td><td data-sort="61.57">61.57</td><td data-sort="43.54">43.54</td><td data-sort="9.34">9.34</td><td data-sort="64.28">64.28</td><td data-sort="7.04">7.04</td><td data-sort="30185979.0">30,185,979</td></tr>
+          <tr data-year="1963"><td data-sort="1963">1963</td><td data-sort="3.15">3.15%</td><td data-sort="102.85">102.85</td><td data-sort="9402607.0">9,402,607</td><td data-sort="21272124.0">21,272,124</td><td data-sort="62.0">62.00</td><td data-sort="43.01">43.01</td><td data-sort="9.02">9.02</td><td data-sort="62.39">62.39</td><td data-sort="6.98">6.98</td><td data-sort="31043711.0">31,043,711</td></tr>
+          <tr data-year="1964"><td data-sort="1964">1964</td><td data-sort="3.11">3.11%</td><td data-sort="106.09">106.09</td><td data-sort="9753577.0">9,753,577</td><td data-sort="21889455.0">21,889,455</td><td data-sort="62.19">62.19</td><td data-sort="42.48">42.48</td><td data-sort="8.86">8.86</td><td data-sort="61.32">61.32</td><td data-sort="6.89">6.89</td><td data-sort="31916622.0">31,916,622</td></tr>
+          <tr data-year="1965"><td data-sort="1965">1965</td><td data-sort="3.06">3.06%</td><td data-sort="109.39">109.39</td><td data-sort="10108853.0">10,108,853</td><td data-sort="22516463.0">22,516,463</td><td data-sort="62.38">62.38</td><td data-sort="41.96">41.96</td><td data-sort="8.7">8.70</td><td data-sort="60.25">60.25</td><td data-sort="6.8">6.80</td><td data-sort="32805538.0">32,805,538</td></tr>
+          <tr data-year="1966"><td data-sort="1966">1966</td><td data-sort="2.99">2.99%</td><td data-sort="112.71">112.71</td><td data-sort="10469038.0">10,469,038</td><td data-sort="23148132.0">23,148,132</td><td data-sort="62.56">62.56</td><td data-sort="41.44">41.44</td><td data-sort="8.54">8.54</td><td data-sort="59.17">59.17</td><td data-sort="6.72">6.72</td><td data-sort="33704749.0">33,704,749</td></tr>
+          <tr data-year="1967"><td data-sort="1967">1967</td><td data-sort="2.94">2.94%</td><td data-sort="116.08">116.08</td><td data-sort="10837203.0">10,837,203</td><td data-sort="23784117.0">23,784,117</td><td data-sort="62.75">62.75</td><td data-sort="40.91">40.91</td><td data-sort="8.39">8.39</td><td data-sort="58.1">58.10</td><td data-sort="6.63">6.63</td><td data-sort="34616857.0">34,616,857</td></tr>
+          <tr data-year="1968"><td data-sort="1968">1968</td><td data-sort="2.9">2.90%</td><td data-sort="119.49">119.49</td><td data-sort="11216022.0">11,216,022</td><td data-sort="24422320.0">24,422,320</td><td data-sort="62.94">62.94</td><td data-sort="40.39">40.39</td><td data-sort="8.23">8.23</td><td data-sort="57.03">57.03</td><td data-sort="6.54">6.54</td><td data-sort="35544973.0">35,544,973</td></tr>
+          <tr data-year="1969"><td data-sort="1969">1969</td><td data-sort="2.83">2.83%</td><td data-sort="122.92">122.92</td><td data-sort="11605912.0">11,605,912</td><td data-sort="25054887.0">25,054,887</td><td data-sort="63.0">63.00</td><td data-sort="39.96">39.96</td><td data-sort="8.16">8.16</td><td data-sort="56.55">56.55</td><td data-sort="6.43">6.43</td><td data-sort="36477170.0">36,477,170</td></tr>
+          <tr data-year="1970"><td data-sort="1970">1970</td><td data-sort="2.59">2.59%</td><td data-sort="126.14">126.14</td><td data-sort="11988215.0">11,988,215</td><td data-sort="25633989.0">25,633,989</td><td data-sort="63.06">63.06</td><td data-sort="39.54">39.54</td><td data-sort="8.08">8.08</td><td data-sort="56.07">56.07</td><td data-sort="6.31">6.31</td><td data-sort="37435586.0">37,435,586</td></tr>
+          <tr data-year="1971"><td data-sort="1971">1971</td><td data-sort="2.35">2.35%</td><td data-sort="129.14">129.14</td><td data-sort="12356496.0">12,356,496</td><td data-sort="26162163.0">26,162,163</td><td data-sort="63.11">63.11</td><td data-sort="39.11">39.11</td><td data-sort="8.01">8.01</td><td data-sort="55.6">55.60</td><td data-sort="6.2">6.20</td><td data-sort="38421746.0">38,421,746</td></tr>
+          <tr data-year="1972"><td data-sort="1972">1972</td><td data-sort="2.28">2.28%</td><td data-sort="132.13">132.13</td><td data-sort="12723957.0">12,723,957</td><td data-sort="26684603.0">26,684,603</td><td data-sort="63.17">63.17</td><td data-sort="38.69">38.69</td><td data-sort="7.94">7.94</td><td data-sort="55.12">55.12</td><td data-sort="6.09">6.09</td><td data-sort="39412479.0">39,412,479</td></tr>
+          <tr data-year="1973"><td data-sort="1973">1973</td><td data-sort="2.22">2.22%</td><td data-sort="135.11">135.11</td><td data-sort="13091786.0">13,091,786</td><td data-sort="27202344.0">27,202,344</td><td data-sort="63.23">63.23</td><td data-sort="38.26">38.26</td><td data-sort="7.87">7.87</td><td data-sort="54.64">54.64</td><td data-sort="5.98">5.98</td><td data-sort="40406234.0">40,406,234</td></tr>
+          <tr data-year="1974"><td data-sort="1974">1974</td><td data-sort="2.16">2.16%</td><td data-sort="138.08">138.08</td><td data-sort="13459827.0">13,459,827</td><td data-sort="27714514.0">27,714,514</td><td data-sort="63.23">63.23</td><td data-sort="38.08">38.08</td><td data-sort="7.86">7.86</td><td data-sort="54.51">54.51</td><td data-sort="5.87">5.87</td><td data-sort="41388324.0">41,388,324</td></tr>
+          <tr data-year="1975"><td data-sort="1975">1975</td><td data-sort="2.27">2.27%</td><td data-sort="141.26">141.26</td><td data-sort="13851843.0">13,851,843</td><td data-sort="28268983.0">28,268,983</td><td data-sort="63.23">63.23</td><td data-sort="37.9">37.90</td><td data-sort="7.84">7.84</td><td data-sort="54.38">54.38</td><td data-sort="5.77">5.77</td><td data-sort="42394433.0">42,394,433</td></tr>
+          <tr data-year="1976"><td data-sort="1976">1976</td><td data-sort="2.53">2.53%</td><td data-sort="144.89">144.89</td><td data-sort="14290947.0">14,290,947</td><td data-sort="28910541.0">28,910,541</td><td data-sort="63.24">63.24</td><td data-sort="37.72">37.72</td><td data-sort="7.83">7.83</td><td data-sort="54.25">54.25</td><td data-sort="5.67">5.67</td><td data-sort="43474370.0">43,474,370</td></tr>
+          <tr data-year="1977"><td data-sort="1977">1977</td><td data-sort="2.66">2.66%</td><td data-sort="148.8">148.80</td><td data-sort="14762111.0">14,762,111</td><td data-sort="29605851.0">29,605,851</td><td data-sort="63.24">63.24</td><td data-sort="37.54">37.54</td><td data-sort="7.82">7.82</td><td data-sort="54.12">54.12</td><td data-sort="5.57">5.57</td><td data-sort="44646518.0">44,646,518</td></tr>
+          <tr data-year="1978"><td data-sort="1978">1978</td><td data-sort="2.68">2.68%</td><td data-sort="152.85">152.85</td><td data-sort="15251099.0">15,251,099</td><td data-sort="30324182.0">30,324,182</td><td data-sort="63.24">63.24</td><td data-sort="37.35">37.35</td><td data-sort="7.8">7.80</td><td data-sort="53.99">53.99</td><td data-sort="5.46">5.46</td><td data-sort="45890739.0">45,890,739</td></tr>
+          <tr data-year="1979"><td data-sort="1979">1979</td><td data-sort="2.67">2.67%</td><td data-sort="156.98">156.98</td><td data-sort="15753000.0">15,753,000</td><td data-sort="31054103.0">31,054,103</td><td data-sort="63.45">63.45</td><td data-sort="37.02">37.02</td><td data-sort="7.7">7.70</td><td data-sort="53.5">53.50</td><td data-sort="5.35">5.35</td><td data-sort="47154232.0">47,154,232</td></tr>
+          <tr data-year="1980"><td data-sort="1980">1980</td><td data-sort="2.61">2.61%</td><td data-sort="161.13">161.13</td><td data-sort="16261685.0">16,261,685</td><td data-sort="31782055.0">31,782,055</td><td data-sort="63.65">63.65</td><td data-sort="36.69">36.69</td><td data-sort="7.6">7.60</td><td data-sort="53.0">53.00</td><td data-sort="5.25">5.25</td><td data-sort="48419546.0">48,419,546</td></tr>
+          <tr data-year="1981"><td data-sort="1981">1981</td><td data-sort="2.61">2.61%</td><td data-sort="165.38">165.38</td><td data-sort="16786649.0">16,786,649</td><td data-sort="32525078.0">32,525,078</td><td data-sort="63.86">63.86</td><td data-sort="36.35">36.35</td><td data-sort="7.5">7.50</td><td data-sort="52.51">52.51</td><td data-sort="5.14">5.14</td><td data-sort="49679330.0">49,679,330</td></tr>
+          <tr data-year="1982"><td data-sort="1982">1982</td><td data-sort="2.77">2.77%</td><td data-sort="170.02">170.02</td><td data-sort="17357531.0">17,357,531</td><td data-sort="33338176.0">33,338,176</td><td data-sort="64.06">64.06</td><td data-sort="36.02">36.02</td><td data-sort="7.4">7.40</td><td data-sort="52.01">52.01</td><td data-sort="5.03">5.03</td><td data-sort="50938522.0">50,938,522</td></tr>
+          <tr data-year="1983"><td data-sort="1983">1983</td><td data-sort="2.91">2.91%</td><td data-sort="175.05">175.05</td><td data-sort="17975180.0">17,975,180</td><td data-sort="34219440.0">34,219,440</td><td data-sort="64.27">64.27</td><td data-sort="35.68">35.68</td><td data-sort="7.3">7.30</td><td data-sort="51.52">51.52</td><td data-sort="4.92">4.92</td><td data-sort="52219685.0">52,219,685</td></tr>
+          <tr data-year="1984"><td data-sort="1984">1984</td><td data-sort="2.89">2.89%</td><td data-sort="180.19">180.19</td><td data-sort="18612367.0">18,612,367</td><td data-sort="35113814.0">35,113,814</td><td data-sort="64.46">64.46</td><td data-sort="35.37">35.37</td><td data-sort="7.2">7.20</td><td data-sort="50.26">50.26</td><td data-sort="4.84">4.84</td><td data-sort="53514959.0">53,514,959</td></tr>
+          <tr data-year="1985"><td data-sort="1985">1985</td><td data-sort="2.73">2.73%</td><td data-sort="185.17">185.17</td><td data-sort="19242961.0">19,242,961</td><td data-sort="35970045.0">35,970,045</td><td data-sort="64.66">64.66</td><td data-sort="35.05">35.05</td><td data-sort="7.1">7.10</td><td data-sort="49.0">49.00</td><td data-sort="4.76">4.76</td><td data-sort="54812660.0">54,812,660</td></tr>
+          <tr data-year="1986"><td data-sort="1986">1986</td><td data-sort="2.56">2.56%</td><td data-sort="189.98">189.98</td><td data-sort="19863851.0">19,863,851</td><td data-sort="36781226.0">36,781,226</td><td data-sort="64.85">64.85</td><td data-sort="34.74">34.74</td><td data-sort="7.0">7.00</td><td data-sort="47.73">47.73</td><td data-sort="4.69">4.69</td><td data-sort="56109838.0">56,109,838</td></tr>
+          <tr data-year="1987"><td data-sort="1987">1987</td><td data-sort="2.63">2.63%</td><td data-sort="195.05">195.05</td><td data-sort="20523078.0">20,523,078</td><td data-sort="37634418.0">37,634,418</td><td data-sort="65.05">65.05</td><td data-sort="34.42">34.42</td><td data-sort="6.89">6.89</td><td data-sort="46.47">46.47</td><td data-sort="4.61">4.61</td><td data-sort="57415175.0">57,415,175</td></tr>
+          <tr data-year="1988"><td data-sort="1988">1988</td><td data-sort="2.68">2.68%</td><td data-sort="200.35">200.35</td><td data-sort="21217980.0">21,217,980</td><td data-sort="38521072.0">38,521,072</td><td data-sort="65.24">65.24</td><td data-sort="34.11">34.11</td><td data-sort="6.79">6.79</td><td data-sort="45.21">45.21</td><td data-sort="4.53">4.53</td><td data-sort="58755923.0">58,755,923</td></tr>
+          <tr data-year="1989"><td data-sort="1989">1989</td><td data-sort="2.52">2.52%</td><td data-sort="205.47">205.47</td><td data-sort="21905371.0">21,905,371</td><td data-sort="39359889.0">39,359,889</td><td data-sort="65.69">65.69</td><td data-sort="33.67">33.67</td><td data-sort="6.6">6.60</td><td data-sort="43.46">43.46</td><td data-sort="4.45">4.45</td><td data-sort="60127343.0">60,127,343</td></tr>
+          <tr data-year="1990"><td data-sort="1990">1990</td><td data-sort="2.56">2.56%</td><td data-sort="210.8">210.80</td><td data-sort="22628421.0">22,628,421</td><td data-sort="40226245.0">40,226,245</td><td data-sort="66.15">66.15</td><td data-sort="33.23">33.23</td><td data-sort="6.41">6.41</td><td data-sort="41.71">41.71</td><td data-sort="4.37">4.37</td><td data-sort="61558898.0">61,558,898</td></tr>
+          <tr data-year="1991"><td data-sort="1991">1991</td><td data-sort="2.4">2.40%</td><td data-sort="215.92">215.92</td><td data-sort="23343222.0">23,343,222</td><td data-sort="41039027.0">41,039,027</td><td data-sort="66.6">66.60</td><td data-sort="32.79">32.79</td><td data-sort="6.21">6.21</td><td data-sort="39.96">39.96</td><td data-sort="4.29">4.29</td><td data-sort="63039751.0">63,039,751</td></tr>
+          <tr data-year="1992"><td data-sort="1992">1992</td><td data-sort="2.37">2.37%</td><td data-sort="221.1">221.10</td><td data-sort="24078816.0">24,078,816</td><td data-sort="41847309.0">41,847,309</td><td data-sort="67.06">67.06</td><td data-sort="32.35">32.35</td><td data-sort="6.02">6.02</td><td data-sort="38.21">38.21</td><td data-sort="4.22">4.22</td><td data-sort="64543525.0">64,543,525</td></tr>
+          <tr data-year="1993"><td data-sort="1993">1993</td><td data-sort="2.4">2.40%</td><td data-sort="226.48">226.48</td><td data-sort="24852687.0">24,852,687</td><td data-sort="42677934.0">42,677,934</td><td data-sort="67.51">67.51</td><td data-sort="31.92">31.92</td><td data-sort="5.83">5.83</td><td data-sort="36.46">36.46</td><td data-sort="4.14">4.14</td><td data-sort="66083321.0">66,083,321</td></tr>
+          <tr data-year="1994"><td data-sort="1994">1994</td><td data-sort="2.18">2.18%</td><td data-sort="231.48">231.48</td><td data-sort="25601008.0">25,601,008</td><td data-sort="43418283.0">43,418,283</td><td data-sort="67.74">67.74</td><td data-sort="31.58">31.58</td><td data-sort="5.75">5.75</td><td data-sort="35.39">35.39</td><td data-sort="4.09">4.09</td><td data-sort="67650283.0">67,650,283</td></tr>
+          <tr data-year="1995"><td data-sort="1995">1995</td><td data-sort="2.19">2.19%</td><td data-sort="236.6">236.60</td><td data-sort="26381520.0">26,381,520</td><td data-sort="44164726.0">44,164,726</td><td data-sort="67.96">67.96</td><td data-sort="31.24">31.24</td><td data-sort="5.67">5.67</td><td data-sort="34.32">34.32</td><td data-sort="4.04">4.04</td><td data-sort="69250468.0">69,250,468</td></tr>
+          <tr data-year="1996"><td data-sort="1996">1996</td><td data-sort="2.3">2.30%</td><td data-sort="242.11">242.11</td><td data-sort="27225459.0">27,225,459</td><td data-sort="44964783.0">44,964,783</td><td data-sort="68.19">68.19</td><td data-sort="30.9">30.90</td><td data-sort="5.59">5.59</td><td data-sort="33.25">33.25</td><td data-sort="4.0">4.00</td><td data-sort="70944969.0">70,944,969</td></tr>
+          <tr data-year="1997"><td data-sort="1997">1997</td><td data-sort="2.35">2.35%</td><td data-sort="247.87">247.87</td><td data-sort="28119068.0">28,119,068</td><td data-sort="45789742.0">45,789,742</td><td data-sort="68.41">68.41</td><td data-sort="30.56">30.56</td><td data-sort="5.51">5.51</td><td data-sort="32.17">32.17</td><td data-sort="3.95">3.95</td><td data-sort="72718837.0">72,718,837</td></tr>
+          <tr data-year="1998"><td data-sort="1998">1998</td><td data-sort="2.51">2.51%</td><td data-sort="254.19">254.19</td><td data-sort="29098662.0">29,098,662</td><td data-sort="46692362.0">46,692,362</td><td data-sort="68.64">68.64</td><td data-sort="30.22">30.22</td><td data-sort="5.44">5.44</td><td data-sort="31.1">31.10</td><td data-sort="3.9">3.90</td><td data-sort="74491918.0">74,491,918</td></tr>
+          <tr data-year="1999"><td data-sort="1999">1999</td><td data-sort="2.56">2.56%</td><td data-sort="260.77">260.77</td><td data-sort="30135044.0">30,135,044</td><td data-sort="47618213.0">47,618,213</td><td data-sort="68.68">68.68</td><td data-sort="29.94">29.94</td><td data-sort="5.45">5.45</td><td data-sort="30.46">30.46</td><td data-sort="3.86">3.86</td><td data-sort="76249064.0">76,249,064</td></tr>
+          <tr data-year="2000"><td data-sort="2000">2000</td><td data-sort="2.38">2.38%</td><td data-sort="267.05">267.05</td><td data-sort="31164120.0">31,164,120</td><td data-sort="48461277.0">48,461,277</td><td data-sort="68.73">68.73</td><td data-sort="29.66">29.66</td><td data-sort="5.46">5.46</td><td data-sort="29.82">29.82</td><td data-sort="3.82">3.82</td><td data-sort="77958223.0">77,958,223</td></tr>
+          <tr data-year="2001"><td data-sort="2001">2001</td><td data-sort="2.21">2.21%</td><td data-sort="273.0">273.00</td><td data-sort="32184128.0">32,184,128</td><td data-sort="49217360.0">49,217,360</td><td data-sort="68.77">68.77</td><td data-sort="29.38">29.38</td><td data-sort="5.47">5.47</td><td data-sort="29.18">29.18</td><td data-sort="3.78">3.78</td><td data-sort="79626086.0">79,626,086</td></tr>
+          <tr data-year="2002"><td data-sort="2002">2002</td><td data-sort="2.03">2.03%</td><td data-sort="278.6">278.60</td><td data-sort="33190500.0">33,190,500</td><td data-sort="49878389.0">49,878,389</td><td data-sort="68.82">68.82</td><td data-sort="29.09">29.09</td><td data-sort="5.48">5.48</td><td data-sort="28.54">28.54</td><td data-sort="3.74">3.74</td><td data-sort="81285572.0">81,285,572</td></tr>
+          <tr data-year="2003"><td data-sort="2003">2003</td><td data-sort="1.98">1.98%</td><td data-sort="284.17">284.17</td><td data-sort="34225604.0">34,225,604</td><td data-sort="50506231.0">50,506,231</td><td data-sort="68.86">68.86</td><td data-sort="28.81">28.81</td><td data-sort="5.49">5.49</td><td data-sort="27.9">27.90</td><td data-sort="3.7">3.70</td><td data-sort="82942837.0">82,942,837</td></tr>
+          <tr data-year="2004"><td data-sort="2004">2004</td><td data-sort="1.94">1.94%</td><td data-sort="289.75">289.75</td><td data-sort="35292765.0">35,292,765</td><td data-sort="51101739.0">51,101,739</td><td data-sort="68.98">68.98</td><td data-sort="28.22">28.22</td><td data-sort="5.49">5.49</td><td data-sort="27.41">27.41</td><td data-sort="3.62">3.62</td><td data-sort="84607501.0">84,607,501</td></tr>
+          <tr data-year="2005"><td data-sort="2005">2005</td><td data-sort="1.86">1.86%</td><td data-sort="295.19">295.19</td><td data-sort="36376795.0">36,376,795</td><td data-sort="51639167.0">51,639,167</td><td data-sort="69.1">69.10</td><td data-sort="27.63">27.63</td><td data-sort="5.49">5.49</td><td data-sort="26.92">26.92</td><td data-sort="3.54">3.54</td><td data-sort="86261250.0">86,261,250</td></tr>
+          <tr data-year="2006"><td data-sort="2006">2006</td><td data-sort="1.68">1.68%</td><td data-sort="300.19">300.19</td><td data-sort="37442375.0">37,442,375</td><td data-sort="52066611.0">52,066,611</td><td data-sort="69.21">69.21</td><td data-sort="27.05">27.05</td><td data-sort="5.49">5.49</td><td data-sort="26.44">26.44</td><td data-sort="3.46">3.46</td><td data-sort="87901835.0">87,901,835</td></tr>
+          <tr data-year="2007"><td data-sort="2007">2007</td><td data-sort="1.73">1.73%</td><td data-sort="305.45">305.45</td><td data-sort="38567654.0">38,567,654</td><td data-sort="52507530.0">52,507,530</td><td data-sort="69.33">69.33</td><td data-sort="26.46">26.46</td><td data-sort="5.49">5.49</td><td data-sort="25.95">25.95</td><td data-sort="3.38">3.38</td><td data-sort="89561377.0">89,561,377</td></tr>
+          <tr data-year="2008"><td data-sort="2008">2008</td><td data-sort="1.77">1.77%</td><td data-sort="310.89">310.89</td><td data-sort="40004062.0">40,004,062</td><td data-sort="52695033.0">52,695,033</td><td data-sort="69.45">69.45</td><td data-sort="25.87">25.87</td><td data-sort="5.48">5.48</td><td data-sort="25.46">25.46</td><td data-sort="3.3">3.30</td><td data-sort="91252326.0">91,252,326</td></tr>
+          <tr data-year="2009"><td data-sort="2009">2009</td><td data-sort="1.8">1.80%</td><td data-sort="316.55">316.55</td><td data-sort="41845896.0">41,845,896</td><td data-sort="52538354.0">52,538,354</td><td data-sort="69.61">69.61</td><td data-sort="25.51">25.51</td><td data-sort="5.54">5.54</td><td data-sort="25.11">25.11</td><td data-sort="3.25">3.25</td><td data-sort="92946951.0">92,946,951</td></tr>
+          <tr data-year="2010"><td data-sort="2010">2010</td><td data-sort="2.05">2.05%</td><td data-sort="323.09">323.09</td><td data-sort="43853447.0">43,853,447</td><td data-sort="52483678.0">52,483,678</td><td data-sort="69.76">69.76</td><td data-sort="25.16">25.16</td><td data-sort="5.6">5.60</td><td data-sort="24.76">24.76</td><td data-sort="3.2">3.20</td><td data-sort="94636700.0">94,636,700</td></tr>
+          <tr data-year="2011"><td data-sort="2011">2011</td><td data-sort="1.96">1.96%</td><td data-sort="329.51">329.51</td><td data-sort="45865757.0">45,865,757</td><td data-sort="52382857.0">52,382,857</td><td data-sort="69.92">69.92</td><td data-sort="24.81">24.81</td><td data-sort="5.66">5.66</td><td data-sort="24.41">24.41</td><td data-sort="3.15">3.15</td><td data-sort="96337913.0">96,337,913</td></tr>
+          <tr data-year="2012"><td data-sort="2012">2012</td><td data-sort="1.94">1.94%</td><td data-sort="335.97">335.97</td><td data-sort="48002381.0">48,002,381</td><td data-sort="52173131.0">52,173,131</td><td data-sort="70.07">70.07</td><td data-sort="24.45">24.45</td><td data-sort="5.72">5.72</td><td data-sort="24.07">24.07</td><td data-sort="3.1">3.10</td><td data-sort="98032317.0">98,032,317</td></tr>
+          <tr data-year="2013"><td data-sort="2013">2013</td><td data-sort="1.88">1.88%</td><td data-sort="342.34">342.34</td><td data-sort="50151501.0">50,151,501</td><td data-sort="51924835.0">51,924,835</td><td data-sort="70.23">70.23</td><td data-sort="24.1">24.10</td><td data-sort="5.78">5.78</td><td data-sort="23.72">23.72</td><td data-sort="3.05">3.05</td><td data-sort="99700107.0">99,700,107</td></tr>
+          <tr data-year="2014"><td data-sort="2014">2014</td><td data-sort="1.64">1.64%</td><td data-sort="348.01">348.01</td><td data-sort="52131818.0">52,131,818</td><td data-sort="51635312.0">51,635,312</td><td data-sort="70.39">70.39</td><td data-sort="23.39">23.39</td><td data-sort="5.79">5.79</td><td data-sort="22.91">22.91</td><td data-sort="2.96">2.96</td><td data-sort="101325201.0">101,325,201</td></tr>
+          <tr data-year="2015"><td data-sort="2015">2015</td><td data-sort="1.48">1.48%</td><td data-sort="353.2">353.20</td><td data-sort="53872761.0">53,872,761</td><td data-sort="51440231.0">51,440,231</td><td data-sort="70.55">70.55</td><td data-sort="22.69">22.69</td><td data-sort="5.8">5.80</td><td data-sort="22.1">22.10</td><td data-sort="2.86">2.86</td><td data-sort="103031365.0">103,031,365</td></tr>
+          <tr data-year="2016"><td data-sort="2016">2016</td><td data-sort="1.34">1.34%</td><td data-sort="357.97">357.97</td><td data-sort="55408086.0">55,408,086</td><td data-sort="51327633.0">51,327,633</td><td data-sort="70.71">70.71</td><td data-sort="21.98">21.98</td><td data-sort="5.81">5.81</td><td data-sort="21.28">21.28</td><td data-sort="2.77">2.77</td><td data-sort="104875266.0">104,875,266</td></tr>
+          <tr data-year="2017"><td data-sort="2017">2017</td><td data-sort="1.29">1.29%</td><td data-sort="362.61">362.61</td><td data-sort="56872092.0">56,872,092</td><td data-sort="51247601.0">51,247,601</td><td data-sort="70.87">70.87</td><td data-sort="21.28">21.28</td><td data-sort="5.82">5.82</td><td data-sort="20.47">20.47</td><td data-sort="2.67">2.67</td><td data-sort="106738501.0">106,738,501</td></tr>
+          <tr data-year="2018"><td data-sort="2018">2018</td><td data-sort="1.24">1.24%</td><td data-sort="367.12">367.12</td><td data-sort="58245264.0">58,245,264</td><td data-sort="51220023.0">51,220,023</td><td data-sort="71.03">71.03</td><td data-sort="20.58">20.58</td><td data-sort="5.83">5.83</td><td data-sort="19.66">19.66</td><td data-sort="2.58">2.58</td><td data-sort="108568836.0">108,568,836</td></tr>
+          <tr data-year="2019"><td data-sort="2019">2019</td><td data-sort="1.22">1.22%</td><td data-sort="371.62">371.62</td><td data-sort="59519606.0">59,519,606</td><td data-sort="51285077.0">51,285,077</td><td data-sort="71.16">71.16</td><td data-sort="20.38">20.38</td><td data-sort="5.9">5.90</td><td data-sort="19.24">19.24</td><td data-sort="2.56">2.56</td><td data-sort="110380804.0">110,380,804</td></tr>
+          <tr data-year="2020"><td data-sort="2020">2020</td><td data-sort="1.15">1.15%</td><td data-sort="375.9">375.90</td><td data-sort="60644675.0">60,644,675</td><td data-sort="51436589.0">51,436,589</td><td data-sort="71.28">71.28</td><td data-sort="20.18">20.18</td><td data-sort="5.97">5.97</td><td data-sort="18.82">18.82</td><td data-sort="2.53">2.53</td><td data-sort="112190977.0">112,190,977</td></tr>
+          <tr data-year="2021"><td data-sort="2021">2021</td><td data-sort="0.91">0.91%</td><td data-sort="379.32">379.32</td><td data-sort="61583931.0">61,583,931</td><td data-sort="51517019.0">51,517,019</td><td data-sort="71.41">71.41</td><td data-sort="19.98">19.98</td><td data-sort="6.04">6.04</td><td data-sort="18.39">18.39</td><td data-sort="2.5">2.50</td><td data-sort="113880328.0">113,880,328</td></tr>
+          <tr data-year="2022"><td data-sort="2022">2022</td><td data-sort="0.76">0.76%</td><td data-sort="382.21">382.21</td><td data-sort="62441328.0">62,441,328</td><td data-sort="51523010.0">51,523,010</td><td data-sort="71.53">71.53</td><td data-sort="19.78">19.78</td><td data-sort="6.11">6.11</td><td data-sort="17.97">17.97</td><td data-sort="2.48">2.48</td><td data-sort="115559009.0">115,559,009</td></tr>
+          <tr data-year="2023"><td data-sort="2023">2023</td><td data-sort="0.81">0.81%</td><td data-sort="385.32">385.32</td><td data-sort="63332937.0">63,332,937</td><td data-sort="51558262.0">51,558,262</td><td data-sort="71.66">71.66</td><td data-sort="19.58">19.58</td><td data-sort="6.17">6.17</td><td data-sort="17.54">17.54</td><td data-sort="2.45">2.45</td><td data-sort="117337368.0">117,337,368</td></tr>
+          <tr data-year="2024"><td data-sort="2024">2024</td><td data-sort="0.83">0.83%</td><td data-sort="" class="na">N/A</td><td data-sort="64237746.0">64,237,746</td><td data-sort="51605924.0">51,605,924</td><td data-sort="71.79">71.79</td><td data-sort="19.38">19.38</td><td data-sort="6.25">6.25</td><td data-sort="17.23">17.23</td><td data-sort="2.43">2.43</td><td data-sort="119106224.0">119,106,224</td></tr>
+          <tr data-year="2025"><td data-sort="2025">2025</td><td data-sort="0.81">0.81%</td><td data-sort="" class="na">N/A</td><td data-sort="65135932.0">65,135,932</td><td data-sort="51651030.0">51,651,030</td><td data-sort="71.92">71.92</td><td data-sort="19.18">19.18</td><td data-sort="6.32">6.32</td><td data-sort="16.91">16.91</td><td data-sort="2.41">2.41</td><td data-sort="120864358.0">120,864,358</td></tr>
+          <tr data-year="2026"><td data-sort="2026">2026</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="" class="na">N/A</td><td data-sort="72.04">72.04</td><td data-sort="18.98">18.98</td><td data-sort="6.4">6.40</td><td data-sort="16.59">16.59</td><td data-sort="2.39">2.39</td><td data-sort="122610193.0">122,610,193</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="source" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Source &amp; use</p>
+          <h2>Where the numbers come from</h2>
+        </div>
+      </div>
+      <div class="source-panel">
+        <div class="source-card">
+          <h3>Primary source</h3>
+          <p>All figures on this page are drawn from a single external source. No indicator has been modified beyond unit conversion and formatting for display.</p>
+          <a class="mt-link" href="https://www.macrotrends.net/global-metrics/countries/phl/philippines/population" target="_blank" rel="noopener noreferrer">MacroTrends <span class="go">→</span></a>
+        </div>
+        <div class="source-card">
+          <h3>Intended use</h3>
+          <p>Built for classroom and self-study use: exploring long-run trends, practicing data storytelling, and prototyping the chart and table components. Not intended as a citable statistical authority — for official figures, consult the Philippine Statistics Authority directly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Kapuluan Atlas — an independent academic project. Not affiliated with any Philippine government agency.</span>
+    <span>Data: <a href="https://www.macrotrends.net/global-metrics/countries/phl/philippines/population" target="_blank" rel="noopener noreferrer">MacroTrends</a></span>
+  </div>
+</footer>
+
+<script>
+/* Chart data, mirrored from the static table above (see #dataTable) — used only to draw the canvas charts. */
+const CHART_DATA = [{year:1950,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:54.49,birthRate:50.39,deathRate:14.18,infantMortality:93.11,fertilityRate:7.51,population:18469878.0},{year:1951,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:55.15,birthRate:49.8,deathRate:13.74,infantMortality:90.45,fertilityRate:7.48,population:19301117.0},{year:1952,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:55.82,birthRate:49.21,deathRate:13.29,infantMortality:87.79,fertilityRate:7.45,population:20167861.0},{year:1953,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:56.49,birthRate:48.62,deathRate:12.84,infantMortality:85.13,fertilityRate:7.42,population:21073747.0},{year:1954,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:57.16,birthRate:48.03,deathRate:12.39,infantMortality:82.47,fertilityRate:7.39,population:22025355.0},{year:1955,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:57.83,birthRate:47.43,deathRate:11.94,infantMortality:79.8,fertilityRate:7.36,population:23027910.0},{year:1956,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:58.49,birthRate:46.84,deathRate:11.49,infantMortality:77.14,fertilityRate:7.33,population:24079343.0},{year:1957,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:59.16,birthRate:46.25,deathRate:11.04,infantMortality:74.48,fertilityRate:7.3,population:25175946.0},{year:1958,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:59.83,birthRate:45.66,deathRate:10.59,infantMortality:71.82,fertilityRate:7.27,population:26302696.0},{year:1959,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:60.26,birthRate:45.13,deathRate:10.28,infantMortality:69.94,fertilityRate:7.21,population:27460371.0},{year:1960,growthRate:null,density:null,urban:8370647.0,rural:19521250.0,lifeExpectancy:60.7,birthRate:44.6,deathRate:9.96,infantMortality:68.05,fertilityRate:7.15,population:28486871.0},{year:1961,growthRate:3.18,density:96.54,urban:8710689.0,rural:20081932.0,lifeExpectancy:61.13,birthRate:44.07,deathRate:9.65,infantMortality:66.16,fertilityRate:7.1,population:29342411.0},{year:1962,growthRate:3.18,density:99.66,urban:9055161.0,rural:20668375.0,lifeExpectancy:61.57,birthRate:43.54,deathRate:9.34,infantMortality:64.28,fertilityRate:7.04,population:30185979.0},{year:1963,growthRate:3.15,density:102.85,urban:9402607.0,rural:21272124.0,lifeExpectancy:62.0,birthRate:43.01,deathRate:9.02,infantMortality:62.39,fertilityRate:6.98,population:31043711.0},{year:1964,growthRate:3.11,density:106.09,urban:9753577.0,rural:21889455.0,lifeExpectancy:62.19,birthRate:42.48,deathRate:8.86,infantMortality:61.32,fertilityRate:6.89,population:31916622.0},{year:1965,growthRate:3.06,density:109.39,urban:10108853.0,rural:22516463.0,lifeExpectancy:62.38,birthRate:41.96,deathRate:8.7,infantMortality:60.25,fertilityRate:6.8,population:32805538.0},{year:1966,growthRate:2.99,density:112.71,urban:10469038.0,rural:23148132.0,lifeExpectancy:62.56,birthRate:41.44,deathRate:8.54,infantMortality:59.17,fertilityRate:6.72,population:33704749.0},{year:1967,growthRate:2.94,density:116.08,urban:10837203.0,rural:23784117.0,lifeExpectancy:62.75,birthRate:40.91,deathRate:8.39,infantMortality:58.1,fertilityRate:6.63,population:34616857.0},{year:1968,growthRate:2.9,density:119.49,urban:11216022.0,rural:24422320.0,lifeExpectancy:62.94,birthRate:40.39,deathRate:8.23,infantMortality:57.03,fertilityRate:6.54,population:35544973.0},{year:1969,growthRate:2.83,density:122.92,urban:11605912.0,rural:25054887.0,lifeExpectancy:63.0,birthRate:39.96,deathRate:8.16,infantMortality:56.55,fertilityRate:6.43,population:36477170.0},{year:1970,growthRate:2.59,density:126.14,urban:11988215.0,rural:25633989.0,lifeExpectancy:63.06,birthRate:39.54,deathRate:8.08,infantMortality:56.07,fertilityRate:6.31,population:37435586.0},{year:1971,growthRate:2.35,density:129.14,urban:12356496.0,rural:26162163.0,lifeExpectancy:63.11,birthRate:39.11,deathRate:8.01,infantMortality:55.6,fertilityRate:6.2,population:38421746.0},{year:1972,growthRate:2.28,density:132.13,urban:12723957.0,rural:26684603.0,lifeExpectancy:63.17,birthRate:38.69,deathRate:7.94,infantMortality:55.12,fertilityRate:6.09,population:39412479.0},{year:1973,growthRate:2.22,density:135.11,urban:13091786.0,rural:27202344.0,lifeExpectancy:63.23,birthRate:38.26,deathRate:7.87,infantMortality:54.64,fertilityRate:5.98,population:40406234.0},{year:1974,growthRate:2.16,density:138.08,urban:13459827.0,rural:27714514.0,lifeExpectancy:63.23,birthRate:38.08,deathRate:7.86,infantMortality:54.51,fertilityRate:5.87,population:41388324.0},{year:1975,growthRate:2.27,density:141.26,urban:13851843.0,rural:28268983.0,lifeExpectancy:63.23,birthRate:37.9,deathRate:7.84,infantMortality:54.38,fertilityRate:5.77,population:42394433.0},{year:1976,growthRate:2.53,density:144.89,urban:14290947.0,rural:28910541.0,lifeExpectancy:63.24,birthRate:37.72,deathRate:7.83,infantMortality:54.25,fertilityRate:5.67,population:43474370.0},{year:1977,growthRate:2.66,density:148.8,urban:14762111.0,rural:29605851.0,lifeExpectancy:63.24,birthRate:37.54,deathRate:7.82,infantMortality:54.12,fertilityRate:5.57,population:44646518.0},{year:1978,growthRate:2.68,density:152.85,urban:15251099.0,rural:30324182.0,lifeExpectancy:63.24,birthRate:37.35,deathRate:7.8,infantMortality:53.99,fertilityRate:5.46,population:45890739.0},{year:1979,growthRate:2.67,density:156.98,urban:15753000.0,rural:31054103.0,lifeExpectancy:63.45,birthRate:37.02,deathRate:7.7,infantMortality:53.5,fertilityRate:5.35,population:47154232.0},{year:1980,growthRate:2.61,density:161.13,urban:16261685.0,rural:31782055.0,lifeExpectancy:63.65,birthRate:36.69,deathRate:7.6,infantMortality:53.0,fertilityRate:5.25,population:48419546.0},{year:1981,growthRate:2.61,density:165.38,urban:16786649.0,rural:32525078.0,lifeExpectancy:63.86,birthRate:36.35,deathRate:7.5,infantMortality:52.51,fertilityRate:5.14,population:49679330.0},{year:1982,growthRate:2.77,density:170.02,urban:17357531.0,rural:33338176.0,lifeExpectancy:64.06,birthRate:36.02,deathRate:7.4,infantMortality:52.01,fertilityRate:5.03,population:50938522.0},{year:1983,growthRate:2.91,density:175.05,urban:17975180.0,rural:34219440.0,lifeExpectancy:64.27,birthRate:35.68,deathRate:7.3,infantMortality:51.52,fertilityRate:4.92,population:52219685.0},{year:1984,growthRate:2.89,density:180.19,urban:18612367.0,rural:35113814.0,lifeExpectancy:64.46,birthRate:35.37,deathRate:7.2,infantMortality:50.26,fertilityRate:4.84,population:53514959.0},{year:1985,growthRate:2.73,density:185.17,urban:19242961.0,rural:35970045.0,lifeExpectancy:64.66,birthRate:35.05,deathRate:7.1,infantMortality:49.0,fertilityRate:4.76,population:54812660.0},{year:1986,growthRate:2.56,density:189.98,urban:19863851.0,rural:36781226.0,lifeExpectancy:64.85,birthRate:34.74,deathRate:7.0,infantMortality:47.73,fertilityRate:4.69,population:56109838.0},{year:1987,growthRate:2.63,density:195.05,urban:20523078.0,rural:37634418.0,lifeExpectancy:65.05,birthRate:34.42,deathRate:6.89,infantMortality:46.47,fertilityRate:4.61,population:57415175.0},{year:1988,growthRate:2.68,density:200.35,urban:21217980.0,rural:38521072.0,lifeExpectancy:65.24,birthRate:34.11,deathRate:6.79,infantMortality:45.21,fertilityRate:4.53,population:58755923.0},{year:1989,growthRate:2.52,density:205.47,urban:21905371.0,rural:39359889.0,lifeExpectancy:65.69,birthRate:33.67,deathRate:6.6,infantMortality:43.46,fertilityRate:4.45,population:60127343.0},{year:1990,growthRate:2.56,density:210.8,urban:22628421.0,rural:40226245.0,lifeExpectancy:66.15,birthRate:33.23,deathRate:6.41,infantMortality:41.71,fertilityRate:4.37,population:61558898.0},{year:1991,growthRate:2.4,density:215.92,urban:23343222.0,rural:41039027.0,lifeExpectancy:66.6,birthRate:32.79,deathRate:6.21,infantMortality:39.96,fertilityRate:4.29,population:63039751.0},{year:1992,growthRate:2.37,density:221.1,urban:24078816.0,rural:41847309.0,lifeExpectancy:67.06,birthRate:32.35,deathRate:6.02,infantMortality:38.21,fertilityRate:4.22,population:64543525.0},{year:1993,growthRate:2.4,density:226.48,urban:24852687.0,rural:42677934.0,lifeExpectancy:67.51,birthRate:31.92,deathRate:5.83,infantMortality:36.46,fertilityRate:4.14,population:66083321.0},{year:1994,growthRate:2.18,density:231.48,urban:25601008.0,rural:43418283.0,lifeExpectancy:67.74,birthRate:31.58,deathRate:5.75,infantMortality:35.39,fertilityRate:4.09,population:67650283.0},{year:1995,growthRate:2.19,density:236.6,urban:26381520.0,rural:44164726.0,lifeExpectancy:67.96,birthRate:31.24,deathRate:5.67,infantMortality:34.32,fertilityRate:4.04,population:69250468.0},{year:1996,growthRate:2.3,density:242.11,urban:27225459.0,rural:44964783.0,lifeExpectancy:68.19,birthRate:30.9,deathRate:5.59,infantMortality:33.25,fertilityRate:4.0,population:70944969.0},{year:1997,growthRate:2.35,density:247.87,urban:28119068.0,rural:45789742.0,lifeExpectancy:68.41,birthRate:30.56,deathRate:5.51,infantMortality:32.17,fertilityRate:3.95,population:72718837.0},{year:1998,growthRate:2.51,density:254.19,urban:29098662.0,rural:46692362.0,lifeExpectancy:68.64,birthRate:30.22,deathRate:5.44,infantMortality:31.1,fertilityRate:3.9,population:74491918.0},{year:1999,growthRate:2.56,density:260.77,urban:30135044.0,rural:47618213.0,lifeExpectancy:68.68,birthRate:29.94,deathRate:5.45,infantMortality:30.46,fertilityRate:3.86,population:76249064.0},{year:2000,growthRate:2.38,density:267.05,urban:31164120.0,rural:48461277.0,lifeExpectancy:68.73,birthRate:29.66,deathRate:5.46,infantMortality:29.82,fertilityRate:3.82,population:77958223.0},{year:2001,growthRate:2.21,density:273.0,urban:32184128.0,rural:49217360.0,lifeExpectancy:68.77,birthRate:29.38,deathRate:5.47,infantMortality:29.18,fertilityRate:3.78,population:79626086.0},{year:2002,growthRate:2.03,density:278.6,urban:33190500.0,rural:49878389.0,lifeExpectancy:68.82,birthRate:29.09,deathRate:5.48,infantMortality:28.54,fertilityRate:3.74,population:81285572.0},{year:2003,growthRate:1.98,density:284.17,urban:34225604.0,rural:50506231.0,lifeExpectancy:68.86,birthRate:28.81,deathRate:5.49,infantMortality:27.9,fertilityRate:3.7,population:82942837.0},{year:2004,growthRate:1.94,density:289.75,urban:35292765.0,rural:51101739.0,lifeExpectancy:68.98,birthRate:28.22,deathRate:5.49,infantMortality:27.41,fertilityRate:3.62,population:84607501.0},{year:2005,growthRate:1.86,density:295.19,urban:36376795.0,rural:51639167.0,lifeExpectancy:69.1,birthRate:27.63,deathRate:5.49,infantMortality:26.92,fertilityRate:3.54,population:86261250.0},{year:2006,growthRate:1.68,density:300.19,urban:37442375.0,rural:52066611.0,lifeExpectancy:69.21,birthRate:27.05,deathRate:5.49,infantMortality:26.44,fertilityRate:3.46,population:87901835.0},{year:2007,growthRate:1.73,density:305.45,urban:38567654.0,rural:52507530.0,lifeExpectancy:69.33,birthRate:26.46,deathRate:5.49,infantMortality:25.95,fertilityRate:3.38,population:89561377.0},{year:2008,growthRate:1.77,density:310.89,urban:40004062.0,rural:52695033.0,lifeExpectancy:69.45,birthRate:25.87,deathRate:5.48,infantMortality:25.46,fertilityRate:3.3,population:91252326.0},{year:2009,growthRate:1.8,density:316.55,urban:41845896.0,rural:52538354.0,lifeExpectancy:69.61,birthRate:25.51,deathRate:5.54,infantMortality:25.11,fertilityRate:3.25,population:92946951.0},{year:2010,growthRate:2.05,density:323.09,urban:43853447.0,rural:52483678.0,lifeExpectancy:69.76,birthRate:25.16,deathRate:5.6,infantMortality:24.76,fertilityRate:3.2,population:94636700.0},{year:2011,growthRate:1.96,density:329.51,urban:45865757.0,rural:52382857.0,lifeExpectancy:69.92,birthRate:24.81,deathRate:5.66,infantMortality:24.41,fertilityRate:3.15,population:96337913.0},{year:2012,growthRate:1.94,density:335.97,urban:48002381.0,rural:52173131.0,lifeExpectancy:70.07,birthRate:24.45,deathRate:5.72,infantMortality:24.07,fertilityRate:3.1,population:98032317.0},{year:2013,growthRate:1.88,density:342.34,urban:50151501.0,rural:51924835.0,lifeExpectancy:70.23,birthRate:24.1,deathRate:5.78,infantMortality:23.72,fertilityRate:3.05,population:99700107.0},{year:2014,growthRate:1.64,density:348.01,urban:52131818.0,rural:51635312.0,lifeExpectancy:70.39,birthRate:23.39,deathRate:5.79,infantMortality:22.91,fertilityRate:2.96,population:101325201.0},{year:2015,growthRate:1.48,density:353.2,urban:53872761.0,rural:51440231.0,lifeExpectancy:70.55,birthRate:22.69,deathRate:5.8,infantMortality:22.1,fertilityRate:2.86,population:103031365.0},{year:2016,growthRate:1.34,density:357.97,urban:55408086.0,rural:51327633.0,lifeExpectancy:70.71,birthRate:21.98,deathRate:5.81,infantMortality:21.28,fertilityRate:2.77,population:104875266.0},{year:2017,growthRate:1.29,density:362.61,urban:56872092.0,rural:51247601.0,lifeExpectancy:70.87,birthRate:21.28,deathRate:5.82,infantMortality:20.47,fertilityRate:2.67,population:106738501.0},{year:2018,growthRate:1.24,density:367.12,urban:58245264.0,rural:51220023.0,lifeExpectancy:71.03,birthRate:20.58,deathRate:5.83,infantMortality:19.66,fertilityRate:2.58,population:108568836.0},{year:2019,growthRate:1.22,density:371.62,urban:59519606.0,rural:51285077.0,lifeExpectancy:71.16,birthRate:20.38,deathRate:5.9,infantMortality:19.24,fertilityRate:2.56,population:110380804.0},{year:2020,growthRate:1.15,density:375.9,urban:60644675.0,rural:51436589.0,lifeExpectancy:71.28,birthRate:20.18,deathRate:5.97,infantMortality:18.82,fertilityRate:2.53,population:112190977.0},{year:2021,growthRate:0.91,density:379.32,urban:61583931.0,rural:51517019.0,lifeExpectancy:71.41,birthRate:19.98,deathRate:6.04,infantMortality:18.39,fertilityRate:2.5,population:113880328.0},{year:2022,growthRate:0.76,density:382.21,urban:62441328.0,rural:51523010.0,lifeExpectancy:71.53,birthRate:19.78,deathRate:6.11,infantMortality:17.97,fertilityRate:2.48,population:115559009.0},{year:2023,growthRate:0.81,density:385.32,urban:63332937.0,rural:51558262.0,lifeExpectancy:71.66,birthRate:19.58,deathRate:6.17,infantMortality:17.54,fertilityRate:2.45,population:117337368.0},{year:2024,growthRate:0.83,density:null,urban:64237746.0,rural:51605924.0,lifeExpectancy:71.79,birthRate:19.38,deathRate:6.25,infantMortality:17.23,fertilityRate:2.43,population:119106224.0},{year:2025,growthRate:0.81,density:null,urban:65135932.0,rural:51651030.0,lifeExpectancy:71.92,birthRate:19.18,deathRate:6.32,infantMortality:16.91,fertilityRate:2.41,population:120864358.0},{year:2026,growthRate:null,density:null,urban:null,rural:null,lifeExpectancy:72.04,birthRate:18.98,deathRate:6.4,infantMortality:16.59,fertilityRate:2.39,population:122610193.0}];
+
+const METRICS = [
+  { key:'population', label:'Population', desc:'Total number of Filipinos recorded for the year, at national level.', fmt:v=>v==null?'N/A':Math.round(v).toLocaleString() },
+  { key:'growthRate', label:'Population Growth Rate', desc:'Year-over-year percentage change in total population.', fmt:v=>v==null?'N/A':v.toFixed(2)+'%' },
+  { key:'density', label:'Density', desc:'Population divided by total land area.', fmt:v=>v==null?'N/A':v.toFixed(2) },
+  { key:'urban', label:'Urban Population', desc:'Number of Filipinos living in areas classified as urban.', fmt:v=>v==null?'N/A':Math.round(v).toLocaleString() },
+  { key:'rural', label:'Rural Population', desc:'Number of Filipinos living in areas classified as rural.', fmt:v=>v==null?'N/A':Math.round(v).toLocaleString() },
+  { key:'lifeExpectancy', label:'Years of Life Expectancy', desc:'Average number of years a newborn is expected to live given current mortality patterns.', fmt:v=>v==null?'N/A':v.toFixed(2)+' yrs' },
+  { key:'birthRate', label:'Live Births Per 1000 People', desc:'Live births occurring per 1,000 people during the year.', fmt:v=>v==null?'N/A':v.toFixed(2) },
+  { key:'deathRate', label:'Deaths Per 1000 People', desc:'Deaths occurring per 1,000 people during the year, across all ages.', fmt:v=>v==null?'N/A':v.toFixed(2) },
+  { key:'infantMortality', label:'Infant Mortality Rate', desc:'Deaths of children under age one, per 1,000 live births in the same year.', fmt:v=>v==null?'N/A':v.toFixed(2) },
+  { key:'fertilityRate', label:'Births per Woman', desc:'Average number of children a woman would have over her lifetime at current age-specific birth rates.', fmt:v=>v==null?'N/A':v.toFixed(2) },
+];
+
+/* ---- Chart.js shared defaults ---- */
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.color = 'rgba(242,237,224,0.55)';
+
+function coralGradient(ctx, area){
+  const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+  g.addColorStop(0, 'rgba(232,115,74,0.38)');
+  g.addColorStop(1, 'rgba(232,115,74,0)');
+  return g;
+}
+
+/* ---- Hero chart: population ---- */
+const heroCtx = document.getElementById('heroChart').getContext('2d');
+new Chart(heroCtx, {
+  type:'line',
+  data:{
+    labels: CHART_DATA.map(d=>d.year),
+    datasets:[{
+      data: CHART_DATA.map(d=>d.population),
+      borderColor:'#e8734a',
+      borderWidth:2,
+      pointRadius:0,
+      pointHoverRadius:4,
+      pointHoverBackgroundColor:'#e8734a',
+      tension:0.25,
+      fill:true,
+      backgroundColor: ctx => coralGradient(ctx.chart.ctx, ctx.chart.chartArea || {top:0,bottom:200}),
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ intersect:false, mode:'index' },
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'#0a3430', borderColor:'rgba(242,237,224,0.2)', borderWidth:1,
+        titleFont:{family:"'IBM Plex Mono', monospace", size:11},
+        bodyFont:{family:"'IBM Plex Mono', monospace", size:11},
+        padding:10,
+        callbacks:{ label: c => ' ' + Math.round(c.parsed.y).toLocaleString() }
+      }
+    },
+    scales:{
+      x:{ grid:{display:false}, ticks:{maxTicksLimit:6, font:{size:10}} },
+      y:{ display:false }
+    }
+  }
+});
+
+/* ---- Metric tabs + explorer chart ---- */
+const tabsEl = document.getElementById('metricTabs');
+let activeMetric = 'population';
+let metricChart = null;
+
+function renderTabs(){
+  tabsEl.innerHTML = METRICS.map(m =>
+    `<button role="tab" data-key="${m.key}" class="${m.key===activeMetric?'active':''}">${m.label}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ activeMetric = btn.dataset.key; renderTabs(); renderExplorer(); });
+  });
+}
+
+function renderExplorer(){
+  const m = METRICS.find(x=>x.key===activeMetric);
+  document.getElementById('metricTitle').textContent = m.label;
+  document.getElementById('metricDesc').textContent = m.desc;
+
+  const last = [...CHART_DATA].reverse().find(d => d[m.key] !== null);
+  document.getElementById('metricLatest').textContent = last ? m.fmt(last[m.key]) : 'N/A';
+  document.getElementById('metricLatestLabel').textContent = last ? last.year : '';
+
+  const ctx = document.getElementById('metricChart').getContext('2d');
+  const values = CHART_DATA.map(d=>d[m.key]);
+
+  if(metricChart) metricChart.destroy();
+  metricChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: CHART_DATA.map(d=>d.year),
+      datasets:[{
+        data: values,
+        borderColor:'#e8734a',
+        borderWidth:2,
+        spanGaps:true,
+        pointRadius:2,
+        pointBackgroundColor:'#0a3430',
+        pointBorderColor:'#e8734a',
+        pointBorderWidth:1.5,
+        pointHoverRadius:5,
+        tension:0.25,
+        fill:true,
+        backgroundColor: ctx => coralGradient(ctx.chart.ctx, ctx.chart.chartArea || {top:0,bottom:320}),
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ intersect:false, mode:'index' },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0a3430', borderColor:'rgba(242,237,224,0.2)', borderWidth:1,
+          titleFont:{family:"'IBM Plex Mono', monospace", size:11},
+          bodyFont:{family:"'IBM Plex Mono', monospace", size:11},
+          padding:10,
+          callbacks:{ label: c => ' ' + m.fmt(c.parsed.y) }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(242,237,224,0.08)'}, ticks:{maxTicksLimit:9, font:{size:10}} },
+        y:{ grid:{color:'rgba(242,237,224,0.08)'}, ticks:{ font:{size:10}, callback:v=>{
+              if(Math.abs(v)>=1000000) return (v/1000000).toFixed(0)+'M';
+              if(Math.abs(v)>=1000) return (v/1000).toFixed(0)+'k';
+              return v;
+            } } }
+      }
+    }
+  });
+}
+
+renderTabs();
+renderExplorer();
+
+/* ---- Table: the rows already exist in the page markup (#tableBody). ----
+   This layer only sorts/filters the real DOM rows — it never rebuilds them,
+   so the full dataset stays present and readable without JavaScript. ---- */
+const tableHead = document.getElementById('tableHead');
+const tableBody = document.getElementById('tableBody');
+let sortDir = 1;
+let sortedKey = 'year';
+
+tableHead.querySelectorAll('th').forEach((th, index) => {
+  th.addEventListener('click', () => {
+    if (sortedKey === th.dataset.key) { sortDir *= -1; } else { sortDir = 1; }
+    sortedKey = th.dataset.key;
+
+    tableHead.querySelectorAll('th').forEach(h => { h.classList.remove('sorted'); h.querySelector('.arrow').textContent = ''; });
+    th.classList.add('sorted');
+    th.querySelector('.arrow').textContent = sortDir === 1 ? '▲' : '▼';
+
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+    rows.sort((r1, r2) => {
+      const c1 = r1.children[index].dataset.sort;
+      const c2 = r2.children[index].dataset.sort;
+      if (c1 === '' && c2 === '') return 0;
+      if (c1 === '') return 1;
+      if (c2 === '') return -1;
+      return (parseFloat(c1) - parseFloat(c2)) * sortDir;
+    });
+    rows.forEach(r => tableBody.appendChild(r));
+  });
+});
+
+document.getElementById('yearSearch').addEventListener('input', e => {
+  const q = e.target.value.trim();
+  tableBody.querySelectorAll('tr').forEach(row => {
+    row.classList.toggle('hidden-row', q.length > 0 && !row.dataset.year.includes(q));
+  });
+});
+</script>
+
+</body>
+</html>
